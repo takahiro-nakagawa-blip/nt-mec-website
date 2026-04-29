@@ -316,6 +316,19 @@ nav .dot{width:10px;height:10px;border-radius:50%;background:var(--orange);opaci
   cursor:pointer;font-family:inherit;transition:background 0.3s;
 }
 .submit-btn:hover{background:var(--green-light)}
+.submit-btn:disabled{opacity:0.6;cursor:not-allowed}
+.form-result{
+  margin-top:16px;padding:16px;border-radius:8px;
+  font-size:0.95rem;text-align:center;line-height:1.6;
+}
+.form-result.success{
+  background:rgba(26,58,46,0.08);color:var(--green);
+  border:1px solid rgba(26,58,46,0.2);
+}
+.form-result.error{
+  background:rgba(200,0,0,0.06);color:#c00;
+  border:1px solid rgba(200,0,0,0.2);
+}
 
 /* === Footer === */
 footer{
@@ -594,9 +607,8 @@ footer{
       〒417-0801 静岡県富士市大淵2586-3 富士インキュベートセンターA-2<br>
       TEL: 0545-50-9135
     </div>
-    <form class="contact-form reveal" action="https://formsubmit.co/takahiro-nakagawa@nt-mec.jp" method="POST">
+    <form id="contactForm" class="contact-form reveal">
       <input type="hidden" name="_subject" value="【NTメカニクスHP】お問い合わせ">
-      <input type="hidden" name="_next" value="https://nt-mec.jp/#contact">
       <input type="hidden" name="_captcha" value="true">
       <input type="hidden" name="_template" value="table">
       <input type="text" name="_honey" style="display:none">
@@ -617,7 +629,8 @@ footer{
         <textarea name="message" placeholder="治具の設計・製作についてのご相談、お見積もり依頼など、お気軽にお問い合わせください。" required></textarea>
       </div>
       <p class="form-note">お問い合わせいただいた内容は、プライバシーポリシーに基づき適切に管理いたします。</p>
-      <button type="submit" class="submit-btn">送信する</button>
+      <button type="submit" class="submit-btn" id="submitBtn">送信する</button>
+      <div id="formResult" class="form-result" style="display:none"></div>
     </form>
   </div>
 </section>
@@ -687,6 +700,48 @@ footer{
     });
   },{threshold:0.3});
   observer.observe(fill.parentElement);
+})();
+
+// AJAX form submission
+(function(){
+  const form = document.getElementById('contactForm');
+  if(!form) return;
+  const btn = document.getElementById('submitBtn');
+  const result = document.getElementById('formResult');
+
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    btn.disabled = true;
+    btn.textContent = '送信中...';
+    result.style.display = 'none';
+
+    const data = new FormData(form);
+    fetch('https://formsubmit.co/ajax/takahiro-nakagawa@nt-mec.jp', {
+      method: 'POST',
+      body: data,
+      headers: { 'Accept': 'application/json' }
+    })
+    .then(function(res){ return res.json(); })
+    .then(function(json){
+      if(json.success){
+        result.className = 'form-result success';
+        result.innerHTML = 'お問い合わせありがとうございます。<br>内容を確認の上、担当者よりご連絡いたします。';
+        result.style.display = 'block';
+        form.reset();
+      } else {
+        throw new Error('送信に失敗しました');
+      }
+    })
+    .catch(function(){
+      result.className = 'form-result error';
+      result.innerHTML = '送信に失敗しました。お手数ですが、お電話（0545-50-9135）にてお問い合わせください。';
+      result.style.display = 'block';
+    })
+    .finally(function(){
+      btn.disabled = false;
+      btn.textContent = '送信する';
+    });
+  });
 })();
 </script>
 
